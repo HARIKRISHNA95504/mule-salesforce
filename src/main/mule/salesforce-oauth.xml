@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9e6b6809-a76e-4e58-9d3a-281a807c70d4" >
-		<http:listener-connection host="localhost" port="8081" />
+		<http:listener-connection host="localhost" port="8082" />
 	</http:listener-config>
 	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="dbe97ab2-f2e6-4fc4-b811-8f632e45ddaf" >
 		<salesforce:oauth-client-credentials-connection >
@@ -17,45 +17,56 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	<flow name="salesforce-oauthFlow" doc:id="b05b70db-6d07-4ae8-b08c-8624d0ea270a" >
 		<http:listener doc:name="Listener" doc:id="9a266853-2a8b-448c-8365-4ddc54cdbc8e" config-ref="HTTP_Listener_config" path="/salesforce_query"/>
 		<logger level="INFO" doc:name="Logger" doc:id="df1d1650-72c1-4499-92a0-3ebaa349f870" message="salesforce flow started"/>
-		<ee:transform doc:name="Transform Message" doc:id="01631962-f17b-4dc5-b300-0db601617201" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload map(item,index) -> {
-	Name : item.empName,
-	Emp_role__c : item.empRole,
-	Emp_email__c : item.empEmail,
-	Emp_phone__c :item.empPhone,
-	Emp_skills__c : item.empSkills,
-	Emp_city__c : item.empCity
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<salesforce:create doc:name="Create" doc:id="ddcd2048-c082-46aa-84ea-fb213624548a" config-ref="Salesforce_Config1" type="Employee__c" />
 		<salesforce:query doc:name="Query" doc:id="ae9ccb40-f663-4641-95b1-ab472b0b477c" config-ref="Salesforce_Config1">
-			<salesforce:salesforce-query ><![CDATA[SELECT Id, Name, Emp_email__c, Emp_phone__c, Emp_skills__c
+			<salesforce:salesforce-query ><![CDATA[SELECT Id, Name, Emp_email__c, Emp_phone__c, Emp_skills__c,Emp_role__c
 FROM Employee__c
 ]]></salesforce:salesforce-query>
 		</salesforce:query>
 		<ee:transform doc:name="Transform Message" doc:id="cdf2ea2b-4de0-490d-a903-813dc24021ac" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
+output application/json
 ---
-"SELECT Id, Name, Emp_role__c, Emp_email__c, Emp_phone__c, Emp_skills__c, Emp_city__c " ++
-"FROM Employee__c " ++
-"WHERE Id = '" ++ attributes.uriParams.id ++ "'"]]></ee:set-payload>
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="f9291c53-a0bb-4abe-bf70-3a6922223b19" >
+		<logger level="INFO" doc:name="Logger" doc:id="15d44230-ce1a-44ec-aa81-11a4f5c6eb4a" message="salesforce flow ended " />
+	</flow>
+	<flow name="salesforce-oauthFlow1" doc:id="35c16667-237c-4775-8911-fa2ae925b0c2" >
+		<http:listener doc:name="Listener" doc:id="8dd1c648-63dd-4281-b390-d1b0f422642d" config-ref="HTTP_Listener_config" path="/salesforce_create"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3530366f-f07e-461e-b191-b965e7cb584b" message="salesforce creation flow started"/>
+		<ee:transform doc:name="Transform Message" doc:id="c9149a30-e3b9-4695-91e3-3eedc84ecc0b" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
-&#45;&#45;-
-payload&#93;&#93;></ee:set-payload>
+---
+payload]]></ee:set-payload>
 			</ee:message>
-		</ee:transform> [STUDIO] -->
-		<logger level="INFO" doc:name="Logger" doc:id="15d44230-ce1a-44ec-aa81-11a4f5c6eb4a" message="salesforce flow ended "/>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="01631962-f17b-4dc5-b300-0db601617201">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map(item,index) -> {
+	Name: item.empName,
+	Emp_role__c: item.empRole,
+	Emp_email__c: item.empEmail,
+	Emp_phone__c: item.empPhone,
+	Emp_skills__c: item.empSkills,
+	Emp_city__c: item.empCity
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="ddcd2048-c082-46aa-84ea-fb213624548a" config-ref="Salesforce_Config1" type="Employee__c" />
+		<ee:transform doc:name="Transform Message" doc:id="f9291c53-a0bb-4abe-bf70-3a6922223b19">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="131fa9df-33aa-4f3a-b9af-3657373a4040" message="salesforce creation flow ended"/>
 	</flow>
 </mule>
