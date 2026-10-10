@@ -69,4 +69,31 @@ payload]]></ee:set-payload>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="131fa9df-33aa-4f3a-b9af-3657373a4040" message="salesforce creation flow ended"/>
 	</flow>
+	<flow name="salesforce-oauthFlow2" doc:id="3ae17745-9d20-400d-93a6-da0a8753b753" >
+		<http:listener doc:name="Listener" doc:id="b611f974-cc3e-4ebf-a789-7a46a6eeef7a" config-ref="HTTP_Listener_config" path="/sfdelete"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3014b8f2-a22d-4e5c-a2fe-b80547a0a205" message="delete flow started successfully"/>
+		<ee:transform doc:name="Transform Message" doc:id="cf3e4912-6438-4486-a491-c4e976e0d8ae">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[
+    attributes.queryParams.id
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:delete doc:name="Delete" doc:id="27c0fa74-75ac-495e-8e6e-29e8f73f4f89" config-ref="Salesforce_Config1">
+		</salesforce:delete>
+		<ee:transform doc:name="Transform Message" doc:id="ec5b91b0-cba1-4296-b13d-d2f3c2bd8392">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    message: "Employee deleted successfully",
+    id: attributes.queryParams.id
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 </mule>
