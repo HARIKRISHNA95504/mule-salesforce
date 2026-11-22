@@ -69,7 +69,7 @@ payload]]></ee:set-payload>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="131fa9df-33aa-4f3a-b9af-3657373a4040" message="salesforce creation flow ended"/>
 	</flow>
-	<flow name="salesforce-oauthFlow2" doc:id="3ae17745-9d20-400d-93a6-da0a8753b753" >
+	<flow name="salesforce-oauthFlow2" doc:id="3ae17745-9d20-400d-93a6-da0a8753b753" maxConcurrency="5">
 		<http:listener doc:name="Listener" doc:id="b611f974-cc3e-4ebf-a789-7a46a6eeef7a" config-ref="HTTP_Listener_config" path="/sfdelete"/>
 		<logger level="INFO" doc:name="Logger" doc:id="3014b8f2-a22d-4e5c-a2fe-b80547a0a205" message="delete flow started successfully"/>
 		<ee:transform doc:name="Transform Message" doc:id="cf3e4912-6438-4486-a491-c4e976e0d8ae">
@@ -93,6 +93,32 @@ output application/json
     message: "Employee deleted successfully",
     id: attributes.queryParams.id
 }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="salesforce-oauthFlow3" doc:id="79bb284e-f05c-4a86-8d53-49b5b19843df" >
+		<http:listener doc:name="Listener" doc:id="5aff1a82-470e-46a6-bcee-93c01b35a80e" config-ref="HTTP_Listener_config" path="/update"/>
+		<logger level="INFO" doc:name="Logger" doc:id="b48a180d-b7df-403a-a811-dcd44ee105f3" />
+		<ee:transform doc:name="Transform Message" doc:id="e657dfb0-24cd-4d6f-b72d-edbf14d977bd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    Id: attributes.uriParams.id,
+    Name: payload.empName
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update type="Employee__c" doc:name="Update" doc:id="b1fe6194-00d3-437a-ba96-7d9f6f88da83" config-ref="Salesforce_Config1">
+			<salesforce:records ><![CDATA[#[payload.id]]]></salesforce:records>
+		</salesforce:update>
+		<ee:transform doc:name="Transform Message" doc:id="560d3852-db69-46b3-9ced-e041dab9d175" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</flow>
